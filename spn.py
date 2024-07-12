@@ -1,7 +1,5 @@
 import random as rand
 
-import random as rand
-
 class SPN:
     l = 16
     m = 4
