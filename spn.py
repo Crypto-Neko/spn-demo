@@ -52,14 +52,17 @@ class SPN:
         p_box = list(range(self.l * self.m))
         rand.shuffle(p_box)
         
+        # Convert the p_box to binary
         for i in range(len(p_box)):
             p_box[i] = format(p_box[i], '04b')
         
+        # Compute the inverse permutation for decryption
         p_box_inv = [0] * len(p_box)
         for i, v in enumerate(p_box):
             p_box_inv[int(v, 2)] = format(i, '04b')
         self.pi_inv = p_box_inv
 
+        # Return the permutation box
         return p_box
 
     # Generate a substitution box
@@ -67,14 +70,17 @@ class SPN:
         s_box = list(range(2**self.l))
         rand.shuffle(s_box)
 
+        # Convert the s_box to binary
         for i in range(len(s_box)):
             s_box[i] = format(s_box[i], '04b')
 
+        # Compute the inverse s_box
         s_box_inv = [0] * len(s_box)
         for i, v in enumerate(s_box):
             s_box_inv[int(v, 2)] = format(i, '04b')
         self.s_box_inv = s_box_inv
 
+        # Return the s_box
         return s_box
 
     # Generate a random key of length key_length
@@ -93,6 +99,7 @@ class SPN:
         rk = []
         seg = self.byte_segments(key)
         
+        # Generate the roundkeys
         i = 0
         for _ in range(self.Nr):
             rkey = []
@@ -103,6 +110,7 @@ class SPN:
             rk.append(rkey)
             i += 1
 
+        # Return the array of roundkeys
         return rk
 
     # Apply the substitution
@@ -154,20 +162,24 @@ class SPN:
         state = self.convert_str_to_bin(plaintext)
         state = self.byte_segments(state)
 
+        # Apply the roundkeys, s_box, and p_box Nr times
         for i in range(self.Nr - 1):
             state = self.add_round_key(state, self.rk[i])
             state = self.apply_sub(state)
             state = self.apply_pi(state)
 
+        # Compute the ciphertext
         state = self.add_round_key(state, self.rk[self.Nr - 1])
         ciphertext = ''.join(state)
         
+        # Convert the ciphertext to a message
         ciphertext_str = ""
         for byte in ciphertext:
             for bit in byte:
                 ciphertext_str += bit
         ciphertext_str = self.convert_bin_to_str(ciphertext_str)
         
+        # Return the ciphertext
         return ciphertext_str
 
     # Perform the decryption
@@ -178,27 +190,19 @@ class SPN:
         # Apply the final round key first
         state = self.add_round_key(state, self.rk[self.Nr - 1])
 
+        # Compute the decrypted message
         for i in range(self.Nr - 2, -1, -1):
             state = self.apply_pi_inv(state)
             state = self.apply_sub_inv(state)
             state = self.add_round_key(state, self.rk[i])
-
         plaintext = ''.join(state)
-
+        
+        # Convert the plaintext to a messaage
         plaintext_str = ""
         for byte in plaintext:
             for bit in byte:
                 plaintext_str += bit
         plaintext_str = self.convert_bin_to_str(plaintext_str)
 
+        # Return the plaintext
         return plaintext_str
-
-
-# Example usage
-spn = SPN()
-print("Original message: c")
-cipher_text = spn.spn_encrypt("c")
-print(f"Cipher Text: {cipher_text}")
-decrypt = spn.spn_decrypt(cipher_text)
-print(f"Decrypted Text: {decrypt}")
-
